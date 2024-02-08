@@ -1,21 +1,11 @@
 #include <Arduino.h>
 #include "SparkFun_SCD30_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
+#include <Wire.h>
+
+SCD30 airSensor;
 
 void setup() {
-  
-}
-
-void loop() {
-
-}
-
-
-
-//###################################################################################################################################################
-
-void setup()
-{
-    Serial.begin(115200);
+  Serial.begin(115200);
     Serial.println("SCD30 Example");
     Wire.begin();
 
@@ -96,11 +86,11 @@ void setup()
         Serial.println("false");
 
     //The SCD30 has data ready every two seconds
+  
 }
 
-void loop()
-{
-    if (airSensor.dataAvailable())
+void loop() {
+   if (airSensor.dataAvailable())
     {
         Serial.print("co2(ppm):");
         Serial.print(airSensor.getCO2());
@@ -117,4 +107,5 @@ void loop()
         Serial.println("Waiting for new data");
 
     delay(500);
+
 }
