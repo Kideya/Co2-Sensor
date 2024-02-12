@@ -1,111 +1,100 @@
-#include <Arduino.h>
+extern "C"
+{
+  volatile long unsigned timer0_millis = 0;
+}
+
+#include <FastLED.h>
 #include "SparkFun_SCD30_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_SCD30
 #include <Wire.h>
 
+#define NUM_LEDS 4
+#define DATA_PIN 7
+#define LED_Type WS2812B
+CRGB leds[NUM_LEDS];
+
 SCD30 airSensor;
 
-void setup() {
-  Serial.begin(115200);
-    Serial.println("SCD30 Example");
-    Wire.begin();
+int co2_ppm;
+void setup()
+{
+  FastLED.addLeds<WS2812B, DATA_PIN, RGB>(leds, NUM_LEDS);
+  Wire.begin();
+  delay(2000);
 
-    //Start sensor using the Wire port, but disable the auto-calibration
-    if (airSensor.begin(Wire, false) == false)
-    {
-        Serial.println("Air sensor not detected. Please check wiring. Freezing...");
-        while (1)
-            ;
-    }
-
-    uint16_t settingVal; // The settings will be returned in settingVal
-    
-    if (airSensor.getForcedRecalibration(&settingVal) == true) // Get the setting
-    {
-      Serial.print("Forced recalibration factor (ppm) is ");
-      Serial.println(settingVal);
-    }
-    else
-    {
-      Serial.print("getForcedRecalibration failed! Freezing...");
-      while (1)
-        ; // Do nothing more
-    }
-
-    if (airSensor.getMeasurementInterval(&settingVal) == true) // Get the setting
-    {
-      Serial.print("Measurement interval (s) is ");
-      Serial.println(settingVal);
-    }
-    else
-    {
-      Serial.print("getMeasurementInterval failed! Freezing...");
-      while (1)
-        ; // Do nothing more
-    }
-
-    if (airSensor.getTemperatureOffset(&settingVal) == true) // Get the setting
-    {
-      Serial.print("Temperature offset (C) is ");
-      Serial.println(((float)settingVal) / 100.0, 2);
-    }
-    else
-    {
-      Serial.print("getTemperatureOffset failed! Freezing...");
-      while (1)
-        ; // Do nothing more
-    }
-
-    if (airSensor.getAltitudeCompensation(&settingVal) == true) // Get the setting
-    {
-      Serial.print("Altitude offset (m) is ");
-      Serial.println(settingVal);
-    }
-    else
-    {
-      Serial.print("getAltitudeCompensation failed! Freezing...");
-      while (1)
-        ; // Do nothing more
-    }
-
-    if (airSensor.getFirmwareVersion(&settingVal) == true) // Get the setting
-    {
-      Serial.print("Firmware version is 0x");
-      Serial.println(settingVal, HEX);
-    }
-    else
-    {
-      Serial.print("getFirmwareVersion! Freezing...");
-      while (1)
-        ; // Do nothing more
-    }
-
-    Serial.print("Auto calibration set to ");
-    if (airSensor.getAutoSelfCalibration() == true)
-        Serial.println("true");
-    else
-        Serial.println("false");
-
-    //The SCD30 has data ready every two seconds
-  
+  // Start sensor using the Wire port, but disable the auto-calibration
+  if (airSensor.begin(Wire, false) == false)
+  {
+    //  // shows red blinking when no sensor is connected
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    delay(500);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    delay(1000);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    delay(1000);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    FastLED.show();
+    delay(1000);
+    fill_solid(leds, NUM_LEDS, CRGB(0, 100, 0));
+    FastLED.show();
+    delay(1000);
+    while (1)
+      ;
+  }
 }
 
-void loop() {
-   if (airSensor.dataAvailable())
+void loop()
+{
+  if (airSensor.dataAvailable())
+  {
+    co2_ppm = airSensor.getCO2();
+  }
+  else
+
+      if (co2_ppm < 1000) // Sets light to green when ppm is below or same as 1000
+  {
+    for (int i = 0; i < 4; i++)
     {
-        Serial.print("co2(ppm):");
-        Serial.print(airSensor.getCO2());
-
-        Serial.print(" temp(C):");
-        Serial.print(airSensor.getTemperature(), 1);
-
-        Serial.print(" humidity(%):");
-        Serial.print(airSensor.getHumidity(), 1);
-
-        Serial.println();
+      leds[i].setRGB(200, 0, 0);
+      FastLED.show();
+      delay(500);
     }
-    else
-        Serial.println("Waiting for new data");
+  }
 
-    delay(500);
+  if ((co2_ppm > 1000) && (co2_ppm < 2000)) // Sets light to yellow when ppm is between 1000 and 2000
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      leds[i].setRGB(245, 221, 7);
+      FastLED.show();
+      delay(500);
+    }
+  }
 
+  if (co2_ppm > 2000) // Sets light to green when ppm is above or same as 2000
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      leds[i].setRGB(0, 200, 0);
+      FastLED.show();
+      delay(500);
+    }
+  }
+  delay(500);
 }
